@@ -22,7 +22,7 @@ from app.models import (
     size_rank,
 )
 from app.notifier import notifier
-from app.schemas import CancelResult, CompleteResult, HoldResult
+from app.schemas import CancelResult, CloseResult, CompleteResult, HoldResult, PickupResult
 
 _CODE_ALPHABET = string.ascii_uppercase + string.digits
 
@@ -166,3 +166,66 @@ def cancel_hold(session: Session, package_id: str) -> CancelResult:
     )
     session.commit()
     return CancelResult(cancelled=True, message=f"Cancelled. Locker {locker_id} is free again.")
+
+
+def open_for_pickup(session: Session, locker_id: str, pickup_code: str) -> PickupResult:
+    """Step 1 of 2: validate the code and unlock the locker for the customer.
+
+    The package is removed here, but the locker goes to OPEN (not AVAILABLE) — it
+    can't be reused until the customer confirms the door is shut (close_locker),
+    so nothing is left physically open. (Storage charge is added in a later step.)
+    """
+    pkg = session.exec(
+        select(Package).where(
+            Package.locker_id == locker_id,
+            Package.pickup_code == pickup_code,
+            Package.status == PackageStatus.STORED,
+        )
+    ).first()
+
+    if pkg is None:
+        notifier.record(
+            session, EventType.PICKUP_FAILURE, Outcome.FAILURE,
+            f"invalid pickup for locker={locker_id}", locker_id=locker_id,
+        )
+        session.commit()
+        return PickupResult(opened=False, message="That locker number and code don't match. Please check and try again.")
+
+    now = now_utc()
+    pkg.status = PackageStatus.RETRIEVED
+    pkg.retrieved_at = now
+    session.add(pkg)
+
+    locker = session.get(Locker, locker_id)
+    if locker is not None:
+        locker.status = LockerStatus.OPEN
+        session.add(locker)
+
+    notifier.record(
+        session, EventType.PICKUP_SUCCESS, Outcome.SUCCESS,
+        f"unlocked, package taken", locker_id=locker_id, package_id=pkg.id,
+    )
+    session.commit()
+    return PickupResult(
+        opened=True,
+        locker_id=locker_id,
+        package_id=pkg.id,
+        message=f"Locker {locker_id} is unlocked. Take your package, then close the door.",
+    )
+
+
+def close_locker(session: Session, locker_id: str) -> CloseResult:
+    """Step 2 of 2: the customer confirms the door is shut; free the locker."""
+    locker = session.get(Locker, locker_id)
+    if locker is None or locker.status != LockerStatus.OPEN:
+        session.rollback()
+        return CloseResult(closed=False, message="That locker isn't open.")
+
+    locker.status = LockerStatus.AVAILABLE
+    session.add(locker)
+    notifier.record(
+        session, EventType.PICKUP_CLOSED, Outcome.SUCCESS,
+        f"{locker_id} closed and available again", locker_id=locker_id,
+    )
+    session.commit()
+    return CloseResult(closed=True, message=f"Locker {locker_id} is closed. Thanks!")

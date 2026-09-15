@@ -51,6 +51,28 @@ class CancelResult(BaseModel):
     message: str
 
 
+class PickupRequest(BaseModel):
+    locker_id: str
+    pickup_code: str
+
+
+class PickupResult(BaseModel):
+    opened: bool
+    locker_id: Optional[str] = None
+    package_id: Optional[str] = None
+    storage_charge: Optional[float] = None
+    message: str
+
+
+class CloseRequest(BaseModel):
+    locker_id: str
+
+
+class CloseResult(BaseModel):
+    closed: bool
+    message: str
+
+
 class NotificationOut(BaseModel):
     id: Optional[int] = None
     ts: datetime
