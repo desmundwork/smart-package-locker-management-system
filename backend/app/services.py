@@ -6,6 +6,7 @@ Business logic lives here; routers stay thin. Grows across milestones:
 """
 import secrets
 import string
+from datetime import timedelta
 
 from sqlalchemy import update
 from sqlmodel import Session, select
@@ -20,6 +21,7 @@ from app.models import (
     Package,
     PackageStatus,
     Size,
+    as_utc,
     now_utc,
     size_rank,
 )
@@ -52,7 +54,52 @@ def create_locker(session: Session, size: Size) -> Locker:
     return locker
 
 
+def release_expired_holds(session: Session) -> int:
+    """Release HELD lockers whose PENDING package wasn't confirmed in time.
+
+    Run lazily before hold/list so no background thread is needed. Returns the
+    number of holds released. The HELD -> AVAILABLE flip is a conditional UPDATE,
+    so under concurrent sweeps each expired hold is released exactly once.
+    """
+    timeout = settings.hold_timeout_seconds
+    if timeout <= 0:
+        return 0
+    cutoff = now_utc() - timedelta(seconds=timeout)
+    stale = session.exec(
+        select(Package).where(Package.status == PackageStatus.PENDING)
+    ).all()
+    released = 0
+    for pkg in stale:
+        if as_utc(pkg.held_at) > cutoff:
+            continue
+        locker_id = pkg.locker_id
+        package_id = pkg.id
+
+        # Atomically flip the locker HELD -> AVAILABLE. rowcount==1 means this
+        # sweep won the release; a concurrent sweep that lost sees 0 and skips,
+        # so the package is deleted and logged exactly once (safe under Postgres).
+        result = session.exec(
+            update(Locker)
+            .where(Locker.id == locker_id, Locker.status == LockerStatus.HELD)
+            .values(status=LockerStatus.AVAILABLE)
+        )
+        if result.rowcount == 0:
+            session.rollback()
+            continue
+
+        session.delete(pkg)  # attrs read above; gone after delete
+        notifier.record(
+            session, EventType.HOLD_EXPIRED, Outcome.SUCCESS,
+            f"hold expired after {timeout}s, {locker_id} released",
+            locker_id=locker_id, package_id=package_id,
+        )
+        session.commit()  # commit per-hold so concurrent sweeps see the new state
+        released += 1
+    return released
+
+
 def list_lockers(session: Session) -> list[Locker]:
+    release_expired_holds(session)
     return list(session.exec(select(Locker).order_by(Locker.id)).all())
 
 
@@ -63,6 +110,7 @@ def hold_locker(session: Session, size: Size) -> HoldResult:
     agents can never hold the same locker). Creates a PENDING package with the
     pickup code but no stored_at yet — the charge clock only starts on confirm.
     """
+    release_expired_holds(session)
     notifier.record(session, EventType.STORE_ATTEMPT, Outcome.SUCCESS, f"size={size.value}")
 
     while True:
