@@ -18,6 +18,18 @@ class LockerOut(BaseModel):
     created_at: datetime
 
 
+class PackageStore(BaseModel):
+    size: Size
+
+
+class HoldResult(BaseModel):
+    held: bool
+    package_id: Optional[str] = None
+    locker_id: Optional[str] = None
+    pickup_code: Optional[str] = None
+    message: str
+
+
 class NotificationOut(BaseModel):
     id: Optional[int] = None
     ts: datetime

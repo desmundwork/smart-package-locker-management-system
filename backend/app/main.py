@@ -5,7 +5,7 @@ from fastapi import FastAPI
 
 from app.config import settings
 from app.db import init_db
-from app.routers import lockers, notifications
+from app.routers import lockers, notifications, packages
 
 
 @asynccontextmanager
@@ -21,6 +21,7 @@ app = FastAPI(
 )
 
 app.include_router(lockers.router)
+app.include_router(packages.router)
 app.include_router(notifications.router)
 
 
