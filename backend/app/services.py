@@ -22,7 +22,7 @@ from app.models import (
     size_rank,
 )
 from app.notifier import notifier
-from app.schemas import HoldResult
+from app.schemas import CancelResult, CompleteResult, HoldResult
 
 _CODE_ALPHABET = string.ascii_uppercase + string.digits
 
@@ -109,3 +109,60 @@ def hold_locker(session: Session, size: Size) -> HoldResult:
             pickup_code=pkg.pickup_code,
             message=f"Locker {target.id} is open. Place the package inside, then confirm.",
         )
+
+
+def complete_store(session: Session, package_id: str) -> CompleteResult:
+    """Step 2 of 2: the agent confirms the package is inside; close and store."""
+    pkg = session.get(Package, package_id)
+    if pkg is None or pkg.status != PackageStatus.PENDING:
+        session.rollback()
+        return CompleteResult(stored=False, message="Nothing to confirm for that package.")
+
+    now = now_utc()
+    pkg.status = PackageStatus.STORED
+    pkg.stored_at = now  # charge clock starts now
+    session.add(pkg)
+
+    locker = session.get(Locker, pkg.locker_id)
+    if locker is not None:
+        locker.status = LockerStatus.OCCUPIED
+        session.add(locker)
+
+    notifier.record(
+        session, EventType.STORE_SUCCESS, Outcome.SUCCESS,
+        f"stored in {pkg.locker_id}, door closed", locker_id=pkg.locker_id, package_id=pkg.id,
+    )
+    notifier.record(
+        session, EventType.CODE_SEND, Outcome.SUCCESS,
+        "pickup code sent to customer (simulated)", locker_id=pkg.locker_id, package_id=pkg.id,
+    )
+    session.commit()
+    return CompleteResult(
+        stored=True,
+        locker_id=pkg.locker_id,
+        pickup_code=pkg.pickup_code,
+        package_id=pkg.id,
+        message=f"All done. Package stored in {pkg.locker_id} and the pickup code is on its way to the customer.",
+    )
+
+
+def cancel_hold(session: Session, package_id: str) -> CancelResult:
+    """Agent backs out before confirming: discard the pending package, free the locker."""
+    pkg = session.get(Package, package_id)
+    if pkg is None or pkg.status != PackageStatus.PENDING:
+        session.rollback()
+        return CancelResult(cancelled=False, message="Nothing to cancel for that package.")
+
+    locker = session.get(Locker, pkg.locker_id)
+    locker_id = pkg.locker_id
+    session.delete(pkg)
+    if locker is not None:
+        locker.status = LockerStatus.AVAILABLE
+        session.add(locker)
+
+    notifier.record(
+        session, EventType.STORE_CANCELLED, Outcome.SUCCESS,
+        f"hold released, {locker_id} available again", locker_id=locker_id, package_id=package_id,
+    )
+    session.commit()
+    return CancelResult(cancelled=True, message=f"Cancelled. Locker {locker_id} is free again.")

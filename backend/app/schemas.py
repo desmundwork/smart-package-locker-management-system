@@ -30,6 +30,27 @@ class HoldResult(BaseModel):
     message: str
 
 
+class CompleteRequest(BaseModel):
+    package_id: str
+
+
+class CompleteResult(BaseModel):
+    stored: bool
+    locker_id: Optional[str] = None
+    pickup_code: Optional[str] = None
+    package_id: Optional[str] = None
+    message: str
+
+
+class CancelRequest(BaseModel):
+    package_id: str
+
+
+class CancelResult(BaseModel):
+    cancelled: bool
+    message: str
+
+
 class NotificationOut(BaseModel):
     id: Optional[int] = None
     ts: datetime
