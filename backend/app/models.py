@@ -5,7 +5,7 @@ by extending SIZE_ORDER only; allocation logic reads the ordering, not literals.
 """
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
+from typing import NamedTuple, Optional
 
 from sqlmodel import Field, SQLModel
 
@@ -37,8 +37,46 @@ class Size(str, Enum):
 SIZE_ORDER = [Size.SMALL, Size.MEDIUM, Size.LARGE]
 
 
+class Dimensions(NamedTuple):
+    """Interior compartment dimensions in centimetres."""
+    width_cm: float
+    depth_cm: float
+    height_cm: float
+
+    @property
+    def volume_litres(self) -> float:
+        # cm^3 -> litres (1 L = 1000 cm^3), rounded to one decimal for display.
+        return round(self.width_cm * self.depth_cm * self.height_cm / 1000, 1)
+
+
+# Physical spec per size — the single source of truth. Frontend reads these via
+# the API rather than hardcoding, so adding a size (append to SIZE_ORDER + here)
+# flows through to the UI automatically.
+SIZE_DIMENSIONS: dict[Size, Dimensions] = {
+    Size.SMALL: Dimensions(width_cm=30, depth_cm=40, height_cm=15),
+    Size.MEDIUM: Dimensions(width_cm=45, depth_cm=55, height_cm=30),
+    Size.LARGE: Dimensions(width_cm=60, depth_cm=70, height_cm=45),
+}
+
+
+# Everyday-object hints so agents/customers can gauge fit at a glance.
+SIZE_LABELS: dict[Size, str] = {
+    Size.SMALL: "Fits a shoebox or a small parcel",
+    Size.MEDIUM: "Fits a backpack or a couple of shoeboxes",
+    Size.LARGE: "Fits a carry-on suitcase or a large box",
+}
+
+
 def size_rank(size: Size) -> int:
     return SIZE_ORDER.index(size)
+
+
+def dimensions_for(size: Size) -> Dimensions:
+    return SIZE_DIMENSIONS[size]
+
+
+def label_for(size: Size) -> str:
+    return SIZE_LABELS[size]
 
 
 class LockerStatus(str, Enum):

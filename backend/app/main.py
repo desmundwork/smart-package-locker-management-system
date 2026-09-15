@@ -5,7 +5,7 @@ from fastapi import FastAPI
 
 from app.config import settings
 from app.db import init_db
-from app.routers import lockers, notifications, packages, pickups
+from app.routers import lockers, notifications, packages, pickups, sizes
 
 
 @asynccontextmanager
@@ -24,6 +24,7 @@ app.include_router(lockers.router)
 app.include_router(packages.router)
 app.include_router(pickups.router)
 app.include_router(notifications.router)
+app.include_router(sizes.router)
 
 
 @app.get("/api/health")

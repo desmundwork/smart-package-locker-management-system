@@ -7,6 +7,19 @@ from pydantic import BaseModel
 from app.models import EventType, LockerStatus, Outcome, Size
 
 
+class DimensionsOut(BaseModel):
+    width_cm: float
+    depth_cm: float
+    height_cm: float
+    volume_litres: float
+
+
+class SizeSpecOut(BaseModel):
+    size: Size
+    dimensions: DimensionsOut
+    label: str  # human-friendly fit hint
+
+
 class LockerCreate(BaseModel):
     size: Size
 
@@ -16,6 +29,7 @@ class LockerOut(BaseModel):
     size: Size
     status: LockerStatus
     created_at: datetime
+    dimensions: DimensionsOut
 
 
 class PackageStore(BaseModel):
