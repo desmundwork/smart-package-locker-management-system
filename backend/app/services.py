@@ -10,6 +10,8 @@ import string
 from sqlalchemy import update
 from sqlmodel import Session, select
 
+from app.charges import billable_days, storage_charge
+from app.config import settings
 from app.models import (
     EventType,
     Locker,
@@ -192,8 +194,13 @@ def open_for_pickup(session: Session, locker_id: str, pickup_code: str) -> Picku
         return PickupResult(opened=False, message="That locker number and code don't match. Please check and try again.")
 
     now = now_utc()
+    stored_at = pkg.stored_at
+    charge = storage_charge(stored_at, now, settings.storage_unit_rate)
+    days = billable_days(stored_at, now)
+
     pkg.status = PackageStatus.RETRIEVED
     pkg.retrieved_at = now
+    pkg.storage_charge = charge
     session.add(pkg)
 
     locker = session.get(Locker, locker_id)
@@ -203,13 +210,17 @@ def open_for_pickup(session: Session, locker_id: str, pickup_code: str) -> Picku
 
     notifier.record(
         session, EventType.PICKUP_SUCCESS, Outcome.SUCCESS,
-        f"unlocked, package taken", locker_id=locker_id, package_id=pkg.id,
+        f"unlocked, package taken, charge={charge}", locker_id=locker_id, package_id=pkg.id,
     )
     session.commit()
     return PickupResult(
         opened=True,
         locker_id=locker_id,
         package_id=pkg.id,
+        storage_charge=charge,
+        stored_at=stored_at,
+        retrieved_at=now,
+        billable_days=days,
         message=f"Locker {locker_id} is unlocked. Take your package, then close the door.",
     )
 

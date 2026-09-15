@@ -61,6 +61,11 @@ class PickupResult(BaseModel):
     locker_id: Optional[str] = None
     package_id: Optional[str] = None
     storage_charge: Optional[float] = None
+    # Charge audit trail (Level 3): when the clock started/stopped and the
+    # number of billable days the tiered charge was computed over.
+    stored_at: Optional[datetime] = None
+    retrieved_at: Optional[datetime] = None
+    billable_days: Optional[int] = None
     message: str
 
 
