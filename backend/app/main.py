@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from app.config import settings
 from app.db import init_db
+from app.routers import notifications
 
 
 @asynccontextmanager
@@ -18,6 +19,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+app.include_router(notifications.router)
 
 
 @app.get("/api/health")
