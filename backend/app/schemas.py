@@ -4,7 +4,18 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from app.models import EventType, Outcome
+from app.models import EventType, LockerStatus, Outcome, Size
+
+
+class LockerCreate(BaseModel):
+    size: Size
+
+
+class LockerOut(BaseModel):
+    id: str
+    size: Size
+    status: LockerStatus
+    created_at: datetime
 
 
 class NotificationOut(BaseModel):
