@@ -1,0 +1,248 @@
+:root {
+  --bg: #0d0d0d;
+  --panel: #161616;
+  --panel-2: #1e1e1e;
+  --text: #ece6d8;
+  --muted: #9a948a;
+  --accent: #f5b301;
+  --border: #2a2a2a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+}
+a { color: var(--accent); }
+.header { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.logo { background: var(--accent); color: #000; font-weight: 800; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 4px; }
+.wrap { max-width: 1000px; margin: 0 auto; padding: 24px 20px 60px; }
+.mobile { max-width: 460px; }
+h1 { font-size: 1.15rem; margin: 0; }
+h2 { color: var(--accent); font-size: 1.1rem; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; }
+label { display: block; font-size: .85rem; color: var(--muted); margin: 10px 0 4px; }
+input, select, button {
+  font-size: 1rem; padding: 12px 14px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--panel-2); color: var(--text); width: 100%;
+}
+button { background: var(--accent); color: #000; font-weight: 700; cursor: pointer; border: none; margin-top: 14px; }
+button:disabled { opacity: .5; cursor: default; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 600; }
+.badge { padding: 2px 8px; border-radius: 999px; font-size: .78rem; }
+.badge.available, .badge.SUCCESS { background: #14351a; color: #7bd88a; }
+.badge.held { background: #0e2136; color: #8fc7ff; }
+.badge.open { background: #241436; color: #d9b8ff; }
+.badge.occupied, .badge.FAILURE { background: #3a1614; color: #f19a94; }
+.result { margin-top: 14px; padding: 14px; border-radius: 8px; border: 1px solid var(--border); }
+.result.ok { border-color: #2c5; }
+.result.err { border-color: #c33; }
+.code { font-family: ui-monospace, Menlo, monospace; font-size: 1.4rem; letter-spacing: 3px; color: var(--accent); }
+.nav-links { display: flex; gap: 14px; flex-wrap: wrap; }
+.nav-links a { display: inline-block; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; text-decoration: none; }
+.muted { color: var(--muted); font-size: .85rem; }
+
+/* --- Side-by-side dashboard with horizontally collapsible columns --- */
+.dash-hint { max-width: none; padding: 12px 20px 0; margin: 0; }
+.dashboard {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+  padding: 14px 20px 40px;
+  overflow-x: auto;
+}
+.col {
+  flex: 1 1 0;
+  min-width: 300px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  transition: flex-basis .2s ease, min-width .2s ease;
+}
+.col-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.col-title { font-weight: 700; color: var(--accent); }
+.col-sub { font-size: .78rem; }
+.col-body { padding: 16px; overflow-y: auto; }
+.col-body .card { border: none; background: transparent; padding: 0 0 18px; margin: 0 0 18px; border-bottom: 1px solid var(--border); }
+.col-body .card:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.col-toggle {
+  width: 30px; height: 30px; flex: 0 0 auto;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--panel-2); color: var(--text);
+  font-size: 1.1rem; line-height: 1; cursor: pointer;
+  padding: 0; margin: 0;
+  display: grid; place-items: center;
+}
+.col-toggle:hover { border-color: var(--accent); }
+
+/* Collapsed: thin vertical strip. */
+.col.collapsed {
+  flex: 0 0 44px;
+  min-width: 44px;
+  cursor: pointer;
+  align-items: center;
+  padding: 12px 0;
+  gap: 12px;
+}
+.col.collapsed:hover { border-color: var(--accent); }
+.col-strip-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: .9rem;
+}
+
+/* On narrow screens, stack columns vertically. */
+@media (max-width: 780px) {
+  .dashboard { flex-direction: column; overflow-x: visible; }
+  .col, .col.collapsed { min-width: 0; }
+  .col.collapsed { flex-direction: row; height: 44px; padding: 0 14px; justify-content: flex-start; }
+  .col.collapsed .col-strip-label { writing-mode: horizontal-tb; transform: none; }
+}
+
+/* --- Visual locker map: one row per size, small (top) -> large (bottom) --- */
+.locker-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.locker-row-label {
+  flex: 0 0 96px;
+  color: var(--muted);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.locker-row-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-end; /* baseline-align different sizes on their bottom edge */
+}
+.locker-cell {
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+  line-height: 1.2;
+  text-align: center;
+  padding: 6px;
+}
+/* Contrast: text >=7:1 (AAA), 2px borders >=3:1 vs panel for non-text UI (WCAG 1.4.11). */
+.locker-cell.available { background: #14351a; border-color: #2c5; color: #7bd88a; }
+.locker-cell.held { background: #0e2136; border-color: #5b9bd5; color: #8fc7ff; }
+.locker-cell.occupied { background: #3a2a08; border-color: var(--accent); color: #ffd66b; }
+.locker-cell.open { background: #241436; border-color: #a878e0; color: #d9b8ff; }
+.locker-id { font-weight: 700; font-size: 15px; }
+.locker-size { font-size: 14px; opacity: .85; }
+
+/* Panel icon in headers and dashboard column titles */
+.panel-icon { font-size: 1.3rem; line-height: 1; }
+.col-title .panel-icon { margin-right: 6px; }
+
+/* Secondary (cancel/back-out) button — lower emphasis than the amber primary */
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-weight: 600;
+}
+.btn-secondary:hover { border-color: #e5534b; color: #f19a94; }
+
+/* Pickup code + copy button row */
+.code-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.copy-btn {
+  width: auto;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.copy-btn:hover { border-color: var(--accent); }
+
+/* Size dimensions/volume hint shown under a size picker */
+.size-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  margin: 6px 0 4px;
+}
+.size-info > div { flex-basis: 100%; }
+
+/* Customer locker picker — interactive variant of the locker-map cell.
+   Reuses .locker-cell for look/footprint; these rules add tap affordances. */
+.picker-cell {
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+}
+.picker-cell:hover:not(:disabled) { filter: brightness(1.12); }
+.picker-cell:disabled { opacity: .6; cursor: default; }
+.picker-cell.selected {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, .4) inset;
+}
+.picker-check {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+/* Delivery-agent: incoming parcel + recommended locker cards */
+.parcel, .reco {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 4px 0 8px;
+  background: var(--panel-2);
+}
+.parcel > div, .reco > div { flex-basis: 100%; }
+.parcel-size { font-size: 1.15rem; font-weight: 700; }
+.reco { border-color: #2c5; background: #14351a; }
+.reco-id { font-size: 1.15rem; font-weight: 700; color: #7bd88a; }
+
+/* Pickup storage-charge breakdown (Level 3) */
+.charge {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0;
+}
+.charge-amount { font-weight: 700; }
