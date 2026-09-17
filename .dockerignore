@@ -1,0 +1,12 @@
+# Keep the build context small and reproducible.
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/node_modules
+**/dist
+backend/static
+**/*.db
+.git
+.kiro
+**/.env
