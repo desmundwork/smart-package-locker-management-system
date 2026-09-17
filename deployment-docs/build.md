@@ -14,8 +14,8 @@ The image is multi-stage: stage 1 builds the React SPA, stage 2 runs FastAPI ser
 Set these once so the commands below are copy-paste ready. Replace `OWNER` with your GitHub username or org (lowercase).
 
 ```bash
-export OWNER=your-github-username
-export IMAGE=ghcr.io/$OWNER/smart-package-locker
+export OWNER=desmundwork
+export IMAGE=ghcr.io/$OWNER/smart-package-locker-management-system
 export TAG=0.1.0
 ```
 

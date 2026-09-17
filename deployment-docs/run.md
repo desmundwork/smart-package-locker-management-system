@@ -5,8 +5,8 @@ How to run the container, locally or after pulling from a registry.
 ## Variables
 
 ```bash
-export OWNER=your-github-username
-export IMAGE=ghcr.io/$OWNER/smart-package-locker
+export OWNER=desmundwork
+export IMAGE=ghcr.io/$OWNER/smart-package-locker-management-system
 export TAG=0.1.0
 ```
 

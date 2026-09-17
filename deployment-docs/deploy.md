@@ -2,11 +2,16 @@
 
 Publish the image to GitHub Container Registry (GHCR) as a **public** image, then pull and run it on an Ubuntu host with Docker.
 
+> This project is already published at
+> `ghcr.io/desmundwork/smart-package-locker-management-system` (tags `0.1.0`,
+> `latest`). The steps below document how that was done and how to release new
+> versions.
+
 ## Variables
 
 ```bash
-export OWNER=your-github-username        # lowercase GitHub user/org
-export IMAGE=ghcr.io/$OWNER/smart-package-locker
+export OWNER=desmundwork                  # GitHub org that owns the package
+export IMAGE=ghcr.io/$OWNER/smart-package-locker-management-system
 export TAG=0.1.0
 ```
 
@@ -38,10 +43,11 @@ docker push $IMAGE:latest
 
 ### 1.4 Make the package public
 
-By default a new GHCR package is private. To make it public:
+By default a new GHCR package is private, and GitHub has **no REST API** to
+change container-package visibility — it must be done in the web UI:
 
-1. Go to `https://github.com/users/$OWNER/packages/container/smart-package-locker/settings`
-   (or the org equivalent).
+1. Open the package settings:
+   `https://github.com/orgs/desmundwork/packages/container/smart-package-locker-management-system/settings`
 2. Under **Danger Zone → Change visibility**, set it to **Public**.
 
 Once public, no login is needed to pull.

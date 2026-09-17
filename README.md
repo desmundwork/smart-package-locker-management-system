@@ -53,6 +53,15 @@ For backend-only dev with hot reload, run `frontend`'s `npm run dev` (proxies `/
 
 ## Run with Docker
 
+Pull the published image (public on GHCR):
+
+```bash
+docker run --rm -p 8000:8000 ghcr.io/desmundwork/smart-package-locker-management-system:latest
+# open http://localhost:8000
+```
+
+Or build it locally:
+
 ```bash
 docker build -t smart-package-locker .
 docker run --rm -p 8000:8000 smart-package-locker
