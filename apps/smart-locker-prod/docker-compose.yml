@@ -15,10 +15,11 @@
 # =============================================================================
 services:
   smart-locker-prod:
+    # Build locally, or `docker compose pull` the published GHCR image.
     build:
       context: .
       dockerfile: Dockerfile
-    image: smart-locker-prod:latest
+    image: ghcr.io/desmundwork/smart-locker-prod:latest
     container_name: smart-locker-prod
     restart: unless-stopped
 
