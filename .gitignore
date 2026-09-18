@@ -1,0 +1,23 @@
+# Secrets — never commit
+**/.env
+!**/.env.example
+caddy/caddy.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node / build artifacts
+node_modules/
+dist/
+build/
+
+# Local scratch
+build-test/
+poc-source/
+
+# OS / editor
+.DS_Store
+Thumbs.db

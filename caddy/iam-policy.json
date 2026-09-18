@@ -1,0 +1,25 @@
+{
+  "Comment": "Least-privilege IAM policy for Caddy to solve Route 53 DNS-01 challenges for yeng.click. Replace HOSTED_ZONE_ID with your actual zone id (e.g. Z0123456789ABCDEFGHIJ).",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListHostedZones",
+      "Effect": "Allow",
+      "Action": [
+        "route53:ListHostedZones",
+        "route53:ListHostedZonesByName",
+        "route53:GetChange"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ManageZoneRecords",
+      "Effect": "Allow",
+      "Action": [
+        "route53:ChangeResourceRecordSets",
+        "route53:ListResourceRecordSets"
+      ],
+      "Resource": "arn:aws:route53:::hostedzone/HOSTED_ZONE_ID"
+    }
+  ]
+}

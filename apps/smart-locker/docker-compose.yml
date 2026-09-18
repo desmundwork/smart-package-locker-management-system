@@ -1,0 +1,41 @@
+# =============================================================================
+# Smart Package Locker Management System
+# Source: https://github.com/desmundwork/smart-package-locker-management-system
+# Served at: https://smart-locker.yeng.click (via the Caddy reverse proxy)
+#
+# The app is a single FastAPI image (serves the built React SPA too), listening
+# on :8000 and storing its SQLite DB at /data/locker.db. We bind it to
+# 127.0.0.1 only, so it's reachable exclusively through Caddy (TLS termination),
+# never directly from the internet.
+# =============================================================================
+services:
+  smart-locker:
+    image: ghcr.io/desmundwork/smart-package-locker-management-system:latest
+    container_name: smart-locker
+    restart: unless-stopped
+
+    # Bind to loopback only. Caddy (on the host) proxies to this.
+    ports:
+      - "127.0.0.1:8000:8000"
+
+    environment:
+      # Persist the SQLite DB on the mounted volume.
+      DATABASE_URL: "sqlite:////data/locker.db"
+      STORAGE_UNIT_RATE: "1"
+      HOLD_TIMEOUT_SECONDS: "120"
+      PORT: "8000"
+
+    volumes:
+      - locker-data:/data
+
+    healthcheck:
+      # The image ships a healthcheck, but we add one here too for compose.
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/sizes').status==200 else 1)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  locker-data:
+    driver: local
