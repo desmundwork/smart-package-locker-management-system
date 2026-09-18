@@ -1,100 +1,47 @@
 # =============================================================================
-# Caddyfile for *.yeng.click SSL termination + wildcard cert via Route 53
+# Caddyfile — SSL termination for the Smart Package Locker only.
 # =============================================================================
 #
-# A single wildcard certificate (*.yeng.click) is issued once via the
-# Route 53 DNS-01 challenge and reused for every subdomain, so you never
-# hit Let's Encrypt rate limits no matter how many subdomains you add.
+# IMPORTANT: yeng.click is a SHARED Route 53 zone with other services
+# (journal., jsonx., monitor., ...). This config therefore only claims the
+# hostnames this app owns — it does NOT use a *.yeng.click catch-all, so it
+# can never shadow or intercept other subdomains.
 #
-# Environment variables (set in the systemd unit / Caddy env file):
-#   ACME_EMAIL         -> email for Let's Encrypt registration
-#   AWS_REGION         -> e.g. us-east-1
-#   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (optional if using instance role)
+# Hostnames served (all proxy to the production container on 127.0.0.1:8100):
+#   smart-locker.yeng.click            -> landing / login
+#   admin.smart-locker.yeng.click      -> Admin view    (ADMIN)
+#   agent.smart-locker.yeng.click      -> Agent view    (AGENT)
+#   customer.smart-locker.yeng.click   -> Customer view (CUSTOMER)
+#
+# Certificates are obtained via the Route 53 DNS-01 challenge:
+#   - a cert for smart-locker.yeng.click
+#   - a wildcard cert for *.smart-locker.yeng.click (covers admin/agent/customer)
+#
+# Environment (set via the systemd env file /etc/caddy/caddy.env):
+#   ACME_EMAIL, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 # =============================================================================
 
 {
-	# Contact email for Let's Encrypt / ACME
 	email {$ACME_EMAIL}
 
-	# ---- Global DNS-01 challenge config for wildcard issuance ----
-	# The route53 module reads AWS creds from the environment or instance role.
+	# DNS-01 challenge provider for all TLS in this file. Reads AWS creds from
+	# the environment (Lightsail has no instance role).
 	acme_dns route53 {
 		max_retries 10
 	}
 
-	# Use Let's Encrypt production. To test without hitting rate limits,
-	# uncomment the staging CA below.
+	# To test issuance without hitting Let's Encrypt rate limits, uncomment:
 	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
 # -----------------------------------------------------------------------------
-# Wildcard site block.
-# This single block matches ANY subdomain of yeng.click and terminates TLS
-# using the shared *.yeng.click wildcard certificate.
+# Production app. One site block matches the app apex and every per-view
+# subdomain. Caddy will obtain a cert for smart-locker.yeng.click and a
+# wildcard for *.smart-locker.yeng.click (both via DNS-01), and reuse them.
+# All hosts proxy to the single container; the app picks the view from the
+# Host header and the API enforces the role.
 # -----------------------------------------------------------------------------
-*.yeng.click {
-	# Force Caddy to obtain and use the wildcard certificate for this block.
-	tls {
-		dns route53 {
-			max_retries 10
-		}
-		resolvers 1.1.1.1 8.8.8.8
-	}
-
-	# ------------------------------------------------------------------
-	# Route each subdomain to its backend. Add/adjust handles as needed.
-	# The @matchers below use the Host header (the requested subdomain).
-	# ------------------------------------------------------------------
-
-	# smart-locker-poc.yeng.click -> POC app, unchanged (Docker, :8000)
-	# The original single-image POC (GHCR), kept as-is for reference/demo.
-	@smart_locker_poc host smart-locker-poc.yeng.click
-	handle @smart_locker_poc {
-		reverse_proxy 127.0.0.1:8000
-	}
-
-	# Production landing/auth entry. The per-view subdomains
-	# (admin/agent/customer.smart-locker.yeng.click) are THIRD-level names
-	# NOT covered by the *.yeng.click cert, so they get their own site block
-	# below (*.smart-locker.yeng.click).
-	@smart_locker_prod host smart-locker.yeng.click
-	handle @smart_locker_prod {
-		reverse_proxy 127.0.0.1:8100
-	}
-
-	# ------------------------------------------------------------------
-	# Fallback for any subdomain that doesn't have an explicit handle.
-	# Returns 404 so you know the subdomain isn't wired up yet.
-	# Replace with a default reverse_proxy if you want a catch-all app.
-	# ------------------------------------------------------------------
-	handle {
-		respond "No service configured for {host}" 404
-	}
-
-	# Sensible security headers applied to everything above.
-	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
-		X-Content-Type-Options "nosniff"
-		X-Frame-Options "SAMEORIGIN"
-		Referrer-Policy "strict-origin-when-cross-origin"
-		-Server
-	}
-
-	# Access + error logging (rotated by Caddy automatically).
-	log {
-		output file /var/log/caddy/yeng.click.access.log
-		format json
-	}
-}
-
-# -----------------------------------------------------------------------------
-# Production per-view subdomains: admin/agent/customer.smart-locker.yeng.click
-# These are THIRD-level subdomains, which the *.yeng.click wildcard does NOT
-# cover. So we obtain a second wildcard cert for *.smart-locker.yeng.click
-# (again via Route 53 DNS-01). All three proxy to the one production container;
-# the app picks the view from the Host header and the API enforces the role.
-# -----------------------------------------------------------------------------
-*.smart-locker.yeng.click {
+smart-locker.yeng.click, *.smart-locker.yeng.click {
 	tls {
 		dns route53 {
 			max_retries 10
@@ -114,36 +61,6 @@
 
 	log {
 		output file /var/log/caddy/smart-locker.access.log
-		format json
-	}
-}
-
-# -----------------------------------------------------------------------------
-# Apex domain (yeng.click) - handled separately since the wildcard cert
-# (*.yeng.click) does NOT cover the bare apex. Caddy will fetch a normal
-# cert for the apex via the same Route 53 DNS challenge.
-# -----------------------------------------------------------------------------
-yeng.click {
-	tls {
-		dns route53 {
-			max_retries 10
-		}
-		resolvers 1.1.1.1 8.8.8.8
-	}
-
-	# Point the apex at whatever your "main" site/service is.
-	# No main site yet, so return a simple landing response. Replace with
-	# a reverse_proxy line when you have an apex service.
-	respond "yeng.click is live. Try https://smart-locker.yeng.click" 200
-
-	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
-		X-Content-Type-Options "nosniff"
-		-Server
-	}
-
-	log {
-		output file /var/log/caddy/yeng.click.apex.log
 		format json
 	}
 }

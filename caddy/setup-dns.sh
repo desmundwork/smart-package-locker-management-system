@@ -47,26 +47,17 @@ if [[ -z "$PUBLIC_IP" ]]; then
 	exit 1
 fi
 
-echo ">>> Pointing yeng.click, *.yeng.click and *.smart-locker.yeng.click -> $PUBLIC_IP (TTL ${TTL}s)"
+echo ">>> Pointing smart-locker.yeng.click and *.smart-locker.yeng.click -> $PUBLIC_IP (TTL ${TTL}s)"
 
-# ---- Build the change batch (apex + wildcard) -------------------------------
+# ---- Build the change batch (smart-locker app records only) -----------------
 CHANGE_BATCH="$(cat <<JSON
 {
-  "Comment": "Point apex and wildcard at EC2 for Caddy SSL termination",
+  "Comment": "Point smart-locker + its per-view subdomains at this host for Caddy SSL termination",
   "Changes": [
     {
       "Action": "UPSERT",
       "ResourceRecordSet": {
-        "Name": "yeng.click",
-        "Type": "A",
-        "TTL": ${TTL},
-        "ResourceRecords": [{ "Value": "${PUBLIC_IP}" }]
-      }
-    },
-    {
-      "Action": "UPSERT",
-      "ResourceRecordSet": {
-        "Name": "*.yeng.click",
+        "Name": "smart-locker.yeng.click",
         "Type": "A",
         "TTL": ${TTL},
         "ResourceRecords": [{ "Value": "${PUBLIC_IP}" }]
@@ -96,4 +87,4 @@ echo ">>> Waiting for INSYNC (DNS propagation within Route 53)..."
 aws route53 wait resource-record-sets-changed --id "$CHANGE_ID"
 
 echo ">>> DNS records are live."
-echo "    Test:  dig +short foo.yeng.click   # should return $PUBLIC_IP"
+echo "    Test:  dig +short admin.smart-locker.yeng.click   # should return $PUBLIC_IP"

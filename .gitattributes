@@ -1,0 +1,5 @@
+# Shell scripts must use LF or they break on Linux (heredocs, shebangs).
+*.sh text eol=lf
+# Dockerfiles and env files are consumed on Linux too.
+Dockerfile text eol=lf
+*.env.example text eol=lf
