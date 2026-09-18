@@ -15,7 +15,7 @@ const VIEW_META: Record<string, { title: string; icon: string }> = {
  * Styled with the app's dark theme tokens (var(--bg/panel/accent/...) from
  * styles.css) for visual consistency with the operator views. In REVIEW_MODE
  * the backend returns the seeded demo credentials for this view, shown in a
- * panel with one-click prefill so reviewers can sign in easily.
+ * panel with one-click prefill for easy verification.
  */
 export default function Login({
   view,
@@ -91,14 +91,14 @@ export default function Login({
           </p>
         </div>
 
-        {/* Reviewer credentials panel (only when the backend is in review mode) */}
+        {/* Demo credentials panel (only when the backend is in review mode) */}
         {demo && (
           <div
             className="card"
             style={{ borderColor: "var(--accent)" }}
           >
             <div style={{ fontWeight: 700, marginBottom: 6, color: "var(--accent)" }}>
-              🔎 Reviewer credentials (verification stage)
+              🔎 Demo credentials (verification stage)
             </div>
             <div style={{ fontFamily: "ui-monospace, Menlo, monospace", fontSize: ".95rem" }}>
               <div>

@@ -94,6 +94,8 @@ export default function LandingProd() {
               <a
                 key={c.name}
                 href={subUrl(c.name)}
+                target="_blank"
+                rel="noreferrer"
                 className="module-card"
                 style={{
                   display: "block",
@@ -147,7 +149,7 @@ export default function LandingProd() {
                     }}
                   >
                     <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--text)" }}>
-                      🔎 Reviewer login
+                      🔎 Demo login
                     </div>
                     <div style={{ fontFamily: "ui-monospace, Menlo, monospace" }}>
                       <div>
