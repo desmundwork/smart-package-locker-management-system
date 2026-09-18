@@ -22,7 +22,7 @@ from enum import Enum
 from typing import Optional
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from sqlmodel import Session, select
@@ -100,6 +100,40 @@ def require_role(*allowed: Role):
     """
 
     def _checker(user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+        if user.role not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Requires role in {[r.value for r in allowed]}",
+            )
+        return user
+
+    return _checker
+
+
+# Safe (read-only) HTTP methods. Reads are authorized more broadly than writes.
+_READ_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+
+def require_role_by_method(*, read: tuple[Role, ...], write: tuple[Role, ...]):
+    """Dependency factory that authorizes reads and writes with different roles.
+
+    Some resources are read by several roles but written by one. For lockers,
+    every operator role needs to *see* availability, but only ADMIN may
+    *create* lockers. Applying one role to the whole router is too coarse, so
+    this guard picks the allowed set from the request method.
+
+    Usage:
+        app.include_router(
+            lockers.router,
+            dependencies=[Depends(require_role_by_method(
+                read=(Role.ADMIN, Role.AGENT, Role.CUSTOMER),
+                write=(Role.ADMIN,),
+            ))],
+        )
+    """
+
+    def _checker(request: Request, user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+        allowed = read if request.method.upper() in _READ_METHODS else write
         if user.role not in allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

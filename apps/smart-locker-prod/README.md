@@ -48,11 +48,18 @@ The overlay adds exactly three production concerns:
 
 | Endpoint group | ADMIN | AGENT | CUSTOMER |
 |----------------|:-----:|:-----:|:--------:|
-| `/api/lockers` (create/list) | ✅ | ❌ | ❌ |
+| `POST /api/lockers` (create) | ✅ | ❌ | ❌ |
+| `GET /api/lockers` (list availability) | ✅ | ✅ | ✅ |
 | `/api/packages` (hold/complete/cancel) | ❌ | ✅ | ❌ |
 | `/api/pickups` (open/close) | ❌ | ❌ | ✅ |
 | `/api/notifications` (transaction log) | ✅ | ❌ | ❌ |
 | `/api/sizes` (reference data) | ✅ | ✅ | ✅ |
+
+Note the lockers split: only ADMIN may **create** lockers, but every operator
+role must **read** availability — the agent view recommends a locker and the
+customer view lists them, both via `GET /api/lockers`. Authorizing the whole
+lockers router as ADMIN-only would break those views, so the guard is
+method-aware (`require_role_by_method`: reads broad, writes ADMIN-only).
 
 This matrix is verified by an integration test (login as each role, assert the
 allowed calls succeed and disallowed calls return `403`).

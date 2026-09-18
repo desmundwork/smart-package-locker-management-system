@@ -25,7 +25,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.auth import Role, require_role
+from app.auth import Role, require_role, require_role_by_method
 from app.config import settings
 from app.db import init_db
 from app.routers import auth_router, lockers, notifications, packages, pickups, sizes
@@ -49,7 +49,19 @@ app = FastAPI(
 app.include_router(auth_router.router)
 
 # ---- Business routers, each gated by the role that owns that surface ----
-app.include_router(lockers.router, dependencies=[Depends(require_role(Role.ADMIN))])
+# Lockers: every operator role must READ availability (agent recommends a
+# locker, customer's picker lists them), but only ADMIN may CREATE lockers.
+app.include_router(
+    lockers.router,
+    dependencies=[
+        Depends(
+            require_role_by_method(
+                read=(Role.ADMIN, Role.AGENT, Role.CUSTOMER),
+                write=(Role.ADMIN,),
+            )
+        )
+    ],
+)
 app.include_router(packages.router, dependencies=[Depends(require_role(Role.AGENT))])
 app.include_router(pickups.router, dependencies=[Depends(require_role(Role.CUSTOMER))])
 app.include_router(notifications.router, dependencies=[Depends(require_role(Role.ADMIN))])
