@@ -1,0 +1,33 @@
+# /etc/systemd/system/caddy.service
+# systemd unit for the custom Caddy build (with route53 module).
+
+[Unit]
+Description=Caddy web server (SSL terminator for *.yeng.click)
+Documentation=https://caddyserver.com/docs/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=caddy
+Group=caddy
+
+# Load AWS creds + ACME email from a protected env file.
+EnvironmentFile=/etc/caddy/caddy.env
+
+ExecStart=/usr/bin/caddy run --environ --config /etc/caddy/Caddyfile
+ExecReload=/usr/bin/caddy reload --config /etc/caddy/Caddyfile --force
+
+Restart=on-failure
+RestartSec=5s
+
+# Hardening
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+LimitNPROC=512
+PrivateTmp=true
+ProtectSystem=full
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

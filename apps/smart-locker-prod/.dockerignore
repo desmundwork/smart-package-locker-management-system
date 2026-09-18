@@ -1,0 +1,12 @@
+# The image builds from the cloned POC source, not local files — only the
+# overlay files under backend/ and frontend/ are needed in the build context.
+.env
+.env.*
+!.env.example
+*.md
+docker-compose.yml
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+dist/
