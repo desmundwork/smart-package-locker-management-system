@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import "./styles.css";
 import Landing from "./views/Landing";
 import Admin from "./views/Admin";
@@ -93,8 +94,15 @@ function App() {
   );
 }
 
+// Wrap in BrowserRouter: the POC view components (Landing, Page) use <Link>,
+// which needs a Router context. In this production model each subdomain renders
+// exactly one view, so routing itself is unused — the provider just satisfies
+// the <Link> hooks. Without it, <Link> calls useContext(RouterContext) === null
+// and throws "Cannot destructure property 'basename'".
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>
 );
