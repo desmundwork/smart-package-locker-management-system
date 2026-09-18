@@ -43,14 +43,24 @@ function App() {
   const role = getRole();
   if (needsRole && role !== needsRole) {
     return (
-      <div style={{ maxWidth: 420, margin: "10vh auto", fontFamily: "system-ui" }}>
-        <h1 style={{ fontSize: 20 }}>Access denied</h1>
-        <p>
-          You are signed in as <b>{getUsername()}</b> ({role}), but this area
-          requires the <b>{needsRole}</b> role.
-        </p>
-        <button onClick={() => { logout(); rerender(); }}>Sign in as another user</button>
-      </div>
+      <>
+        <div className="header">
+          <div className="logo">E.</div>
+          <h1>Smart Package Locker Management System</h1>
+        </div>
+        <div className="wrap mobile">
+          <div className="card">
+            <h2 style={{ marginTop: 0 }}>Access denied</h2>
+            <p>
+              You are signed in as <b>{getUsername()}</b> ({role}), but this
+              area requires the <b>{needsRole}</b> role.
+            </p>
+            <button onClick={() => { logout(); rerender(); }}>
+              Sign in as another user
+            </button>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -58,12 +68,14 @@ function App() {
     <div
       style={{
         display: "flex",
+        alignItems: "center",
         justifyContent: "flex-end",
-        gap: 12,
-        padding: "6px 12px",
-        fontSize: 13,
-        color: "#555",
-        borderBottom: "1px solid #eee",
+        gap: 14,
+        padding: "8px 16px",
+        fontSize: ".85rem",
+        color: "var(--muted)",
+        background: "var(--panel)",
+        borderBottom: "1px solid var(--border)",
       }}
     >
       <span>
