@@ -173,6 +173,23 @@ data story simple while still presenting four distinct app surfaces.
 
 ---
 
+## Relationship to the POC repo (version control)
+
+This production app is **not** a fork or clone of the POC's git repo — it is a
+thin overlay that is version-controlled as part of the `yeng.click` workspace
+repo (the workspace root is the git root). The POC's source is pulled fresh at
+**build time** by the `Dockerfile` (`POC_REPO` / `POC_REF` args), so:
+
+- The overlay files here (auth, RBAC, per-view frontend) are the only
+  production-specific code, and they live in workspace git history.
+- The POC remains the single upstream source of business logic; bump `POC_REF`
+  to pin/upgrade the version you build against.
+
+If you later want the production app to be its own standalone repo (e.g. to
+develop the overlay independently or open-source it), extract
+`apps/smart-locker-prod/` into a new repository and keep the same `POC_REPO`
+build arg pointing at the upstream POC.
+
 ## Build & verification status
 
 The production image has been built and exercised end-to-end locally:

@@ -114,6 +114,15 @@ A record already cover every subdomain.
   `caddy/iam-policy.json`
 - Docker (installed automatically by the app deploy scripts if missing)
 
+## Version control
+
+This workspace is a single git repository (the root is the git root), covering
+the Caddy infra and both apps. The `smart-locker-prod` app is an **overlay**,
+not a clone of the POC's repo — the POC source is pulled at Docker build time
+(`POC_REPO`/`POC_REF` in its `Dockerfile`), so only the production-specific
+overlay lives in this repo's history. See `apps/smart-locker-prod/README.md`
+for details and how to split it into a standalone repo if desired.
+
 ## Secrets
 
 Secrets are never committed — `.gitignore` excludes all `.env` files (except
