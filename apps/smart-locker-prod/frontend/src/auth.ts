@@ -99,20 +99,64 @@ export async function authFetch(input: RequestInfo | URL, init: RequestInit = {}
   return res;
 }
 
-// Which view this deployment surface serves, derived from the hostname:
-//   admin.smart-locker.*    -> admin
-//   agent.smart-locker.*    -> agent
-//   customer.smart-locker.* -> customer
-//   smart-locker.*          -> landing
-// A build-time/global override (window.__VIEW__) wins if present.
-export function currentView(): "landing" | "admin" | "agent" | "customer" {
+export type View = "landing" | "admin" | "agent" | "customer";
+const VIEW_NAMES: View[] = ["admin", "agent", "customer"];
+
+// Is the app being accessed via a bare IP address (e.g. 56.69.57.18) rather
+// than a domain name? On a bare IP the per-view *subdomain* model can't work
+// (admin.56.69.57.18 isn't valid), so we route by URL path instead.
+export function isBareIpHost(): boolean {
+  const host = window.location.hostname;
+  // IPv4, IPv6, or localhost -> treat as "no usable app subdomain".
+  return (
+    /^\d{1,3}(\.\d{1,3}){3}$/.test(host) ||
+    host === "localhost" ||
+    host.includes(":") // IPv6
+  );
+}
+
+// Whether this deployment addresses views by subdomain (admin.smart-locker.…)
+// or by path (/admin). Subdomains are used only when the host looks like a
+// real domain that contains the app name; otherwise fall back to paths so the
+// app is fully usable on a bare IP or localhost.
+export function usesSubdomainRouting(): boolean {
+  return !isBareIpHost() && window.location.hostname.includes("smart-locker");
+}
+
+// Which view this surface serves. Resolution order:
+//   1. explicit override (window.__VIEW__)
+//   2. subdomain  (admin.smart-locker.…)   — domain deployments
+//   3. URL path   (/admin, /agent, /customer) — bare IP / localhost / fallback
+//   4. landing
+export function currentView(): View {
   const override = (window as any).__VIEW__;
   if (override) return override;
+
   const host = window.location.hostname;
   if (host.startsWith("admin.")) return "admin";
   if (host.startsWith("agent.")) return "agent";
   if (host.startsWith("customer.")) return "customer";
+
+  // Path-based fallback: /admin, /agent, /customer (with or without trailing /).
+  const seg = window.location.pathname.split("/").filter(Boolean)[0];
+  if (seg && (VIEW_NAMES as string[]).includes(seg)) return seg as View;
+
   return "landing";
+}
+
+// URL that opens a given view, honouring the deployment's routing style.
+//   subdomain mode: https://admin.smart-locker.yeng.click/
+//   path mode:      http://56.69.57.18:8100/admin
+export function viewUrl(view: View): string {
+  const { protocol, host } = window.location;
+  if (usesSubdomainRouting()) return `${protocol}//${view}.${host}/`;
+  return `${protocol}//${host}/${view}`;
+}
+
+// Human-readable label for a view's destination (shown on the landing cards).
+export function viewTarget(view: View): string {
+  const { host } = window.location;
+  return usesSubdomainRouting() ? `${view}.${host}` : `${host}/${view}`;
 }
 
 // The role required to use a given view surface.

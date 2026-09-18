@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { DemoCredential, fetchDemoCredentials } from "./auth";
+import {
+  DemoCredential,
+  fetchDemoCredentials,
+  usesSubdomainRouting,
+  viewTarget,
+  viewUrl,
+  View,
+} from "./auth";
 
 /**
  * Production landing page (smart-locker.yeng.click).
@@ -16,12 +23,10 @@ import { DemoCredential, fetchDemoCredentials } from "./auth";
  * hint.
  */
 export default function LandingProd() {
-  // Derive the per-view subdomains from the current host so this works on
-  // smart-locker.yeng.click (-> admin.smart-locker.yeng.click, ...) as well as
-  // any other base host it's deployed under.
-  const { protocol, host } = window.location;
-  const subHost = (name: string) => `${name}.${host}`;
-  const subUrl = (name: string) => `${protocol}//${subHost(name)}`;
+  // Link/label helpers pick subdomain vs path routing automatically:
+  //   domain host  -> admin.smart-locker.yeng.click  (opens in a new tab)
+  //   bare IP host -> /admin                          (same tab; SPA loads it)
+  const subdomainMode = usesSubdomainRouting();
 
   const [creds, setCreds] = useState<Record<string, DemoCredential>>({});
 
@@ -93,9 +98,8 @@ export default function LandingProd() {
             return (
               <a
                 key={c.name}
-                href={subUrl(c.name)}
-                target="_blank"
-                rel="noreferrer"
+                href={viewUrl(c.name as View)}
+                {...(subdomainMode ? { target: "_blank", rel: "noreferrer" } : {})}
                 className="module-card"
                 style={{
                   display: "block",
@@ -134,7 +138,7 @@ export default function LandingProd() {
                     wordBreak: "break-all",
                   }}
                 >
-                  {subHost(c.name)}
+                  {viewTarget(c.name as View)}
                 </div>
 
                 {cred && (
