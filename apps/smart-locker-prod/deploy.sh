@@ -60,6 +60,9 @@ SEED_CUSTOMER_USERNAME=customer
 SEED_CUSTOMER_PASSWORD=${CUSTOMER_PW}
 STORAGE_UNIT_RATE=1
 HOLD_TIMEOUT_SECONDS=120
+# Verification stage: show seeded credentials on the login pages. Set to false
+# for a real production deployment.
+REVIEW_MODE=true
 EOF
 	chmod 600 .env
 	echo ""

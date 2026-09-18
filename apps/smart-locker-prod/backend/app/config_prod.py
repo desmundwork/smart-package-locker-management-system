@@ -41,5 +41,16 @@ class Settings:
         # subdomain. One of: landing, admin, agent, customer.
         self.view: str = os.getenv("VIEW", "landing")
 
+        # Review/verification mode. When enabled, the login page can fetch the
+        # seeded demo credentials so reviewers can sign in easily. MUST be off
+        # for a real production deployment — it exposes the seed passwords over
+        # an unauthenticated endpoint. Defaults to off.
+        self.review_mode: bool = os.getenv("REVIEW_MODE", "false").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+
 
 settings = Settings()

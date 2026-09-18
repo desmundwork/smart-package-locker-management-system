@@ -58,6 +58,32 @@ export function logout(): void {
   localStorage.removeItem(USER_KEY);
 }
 
+export interface DemoCredential {
+  view: string;
+  role: Role;
+  username: string;
+  password: string;
+}
+
+export interface DemoCredentialsResponse {
+  review_mode: boolean;
+  credentials: DemoCredential[];
+}
+
+// Fetch seeded demo credentials for the given view. Returns review_mode=false
+// (and an empty list) when the server isn't in review mode, so the caller shows
+// nothing in a real production deployment.
+export async function fetchDemoCredentials(view?: string): Promise<DemoCredentialsResponse> {
+  const qs = view ? `?view=${encodeURIComponent(view)}` : "";
+  try {
+    const res = await fetch(`/api/auth/demo-credentials${qs}`);
+    if (!res.ok) return { review_mode: false, credentials: [] };
+    return (await res.json()) as DemoCredentialsResponse;
+  } catch {
+    return { review_mode: false, credentials: [] };
+  }
+}
+
 // Drop-in replacement for fetch that injects the bearer token and, on a 401,
 // clears the session so the UI falls back to the login screen.
 export async function authFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
