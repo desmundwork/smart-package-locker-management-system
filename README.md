@@ -2,10 +2,13 @@
 
 A POC (built to extend to feature-complete) that lets delivery agents store packages in size-appropriate lockers and customers retrieve them with a pickup code. Implements Levels 1–4 of the Everest Engineering coding challenge (basic storage, retrieval, tiered storage charges, concurrency), plus a two-phase store/pickup model, hold expiry, per-size dimensions, and role-tailored UX.
 
+> **Repository:** [`desmundwork/smart-package-locker-management-system`](https://github.com/desmundwork/smart-package-locker-management-system)
+>
 > **Releases:** the `poc` tag is the original single-image app (all views, no
 > auth). The `prod` / `release` tag adds authentication, role-based
 > authorization, and per-view subdomains — see **Deployment & production**
-> below.
+> below. Module screenshots and per-view descriptions are in
+> [`apps/smart-locker-prod/README.md`](apps/smart-locker-prod/README.md#modules).
 
 ## Layout
 

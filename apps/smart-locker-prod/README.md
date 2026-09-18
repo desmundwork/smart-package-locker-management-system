@@ -13,6 +13,68 @@ split, served behind the Caddy SSL terminator.
 | Production — Agent | https://agent.smart-locker.yeng.click | requires `AGENT` |
 | Production — Customer | https://customer.smart-locker.yeng.click | requires `CUSTOMER` |
 
+**Repository:** [`desmundwork/smart-package-locker-management-system`](https://github.com/desmundwork/smart-package-locker-management-system)
+· POC release tag [`poc`](https://github.com/desmundwork/smart-package-locker-management-system/releases/tag/poc)
+· production release tags [`prod`](https://github.com/desmundwork/smart-package-locker-management-system/releases/tag/prod) / [`release`](https://github.com/desmundwork/smart-package-locker-management-system/releases/tag/release)
+· branch [`deployment/production-overlay`](https://github.com/desmundwork/smart-package-locker-management-system/tree/deployment/production-overlay)
+
+---
+
+## Modules
+
+Each role is served on its own subdomain, behind a login + role gate, sharing
+one dark theme. The three operator surfaces:
+
+### 🗄️ Admin — Master System View
+
+![Admin — Master System View](docs/screenshots/admin.png)
+
+`admin.smart-locker.yeng.click` · role `ADMIN` · desktop layout.
+
+- **Create locker** — add a locker of a chosen size (SMALL / MEDIUM / LARGE);
+  the size picker shows interior dimensions and volume pulled from
+  `GET /api/sizes` (never hardcoded in the UI).
+- **Locker map** — a visual grid grouped by size (small → large), footprint
+  scaled to the real volume, colour-coded by status (green = free, blue = held,
+  amber = occupied, purple = open for pickup).
+- **Lockers table** — every locker with id, size, dimensions, volume, and a
+  live status badge.
+- **Notification / transaction log** — the audit surface: every store, pickup,
+  hold, expiry, and code-send event with outcome, locker, package, and detail.
+  Auto-refreshes every 3s, newest first.
+
+### 🚚 Delivery Agent
+
+![Delivery Agent](docs/screenshots/agent.png)
+
+`agent.smart-locker.yeng.click` · role `AGENT` · mobile layout.
+
+- **Incoming package** — a simulated incoming parcel with its size, dimensions,
+  and volume; "Change package" re-rolls it.
+- **Recommended locker** — the smallest AVAILABLE locker that fits, computed
+  the same way the backend allocates (reads availability via `GET /api/lockers`).
+  If no exact size is free it recommends the next size up.
+- **Two-phase store** — "Open {locker}" reserves the locker and opens the door
+  (hold); "Confirm package is inside" completes the store and reveals the
+  **pickup code** to share with the customer (with a copy button). "Cancel"
+  releases the hold.
+
+### 🙋 Customer Pickup
+
+![Customer Pickup](docs/screenshots/customer.png)
+
+`customer.smart-locker.yeng.click` · role `CUSTOMER` · mobile layout.
+
+- **Available lockers** — a picker listing lockers currently holding a package
+  awaiting collection (empty when nothing is waiting).
+- **Two-phase pickup** — select a locker, enter the 6-character pickup code to
+  unlock it (open), then confirm the door is closed (close). On success it
+  shows the storage charge and frees the locker.
+
+> The screenshots above live in `docs/screenshots/`. All three views share the
+> account bar (user · role · sign out) and the same dark theme; authorization
+> is enforced by the API, so a role only ever reaches its own operations.
+
 ---
 
 ## Approach
