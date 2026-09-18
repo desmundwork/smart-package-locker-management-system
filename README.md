@@ -2,6 +2,11 @@
 
 A POC (built to extend to feature-complete) that lets delivery agents store packages in size-appropriate lockers and customers retrieve them with a pickup code. Implements Levels 1–4 of the Everest Engineering coding challenge (basic storage, retrieval, tiered storage charges, concurrency), plus a two-phase store/pickup model, hold expiry, per-size dimensions, and role-tailored UX.
 
+> **Releases:** the `poc` tag is the original single-image app (all views, no
+> auth). The `prod` / `release` tag adds authentication, role-based
+> authorization, and per-view subdomains — see **Deployment & production**
+> below.
+
 ## Layout
 
 ```
@@ -14,6 +19,11 @@ deployment-docs/   build.md, run.md, deploy.md (local -> GHCR -> Ubuntu)
 .kiro/specs/       requirements, design, tasks, tech-stack
 .kiro/steering/    engineering conventions
 Dockerfile         multi-stage build (SPA -> Python runtime, one image)
+
+# Deployment & production layer (this workspace):
+caddy/             Caddy SSL terminator + Route 53 wildcard certs / DNS
+apps/smart-locker/       POC deploy    -> smart-locker-poc.yeng.click
+apps/smart-locker-prod/  production    -> smart-locker.yeng.click (+ subdomains)
 ```
 
 ## Locker sizes
@@ -89,3 +99,22 @@ cd backend && .venv/bin/pip install -r requirements-dev.txt && .venv/bin/pytest
 | `STORAGE_UNIT_RATE` | `1` | X in the tiered storage-charge rule |
 | `HOLD_TIMEOUT_SECONDS` | `120` | Unconfirmed agent holds older than this are auto-released (0 disables) |
 | `PORT` | `8000` | HTTP port |
+
+## Deployment & production layer
+
+This repo also carries the hosting setup for `yeng.click`:
+
+- **`caddy/`** — Caddy as an SSL terminator with two Route 53 wildcard certs
+  (`*.yeng.click` and `*.smart-locker.yeng.click`), reverse-proxying each
+  subdomain to a loopback-bound container.
+- **`apps/smart-locker/`** — deploys the **POC** image (this repo's `Dockerfile`)
+  at `smart-locker-poc.yeng.click`, unchanged, all views open, no auth.
+- **`apps/smart-locker-prod/`** — the **production** app at
+  `smart-locker.yeng.click` and per-view subdomains
+  (`admin.` / `agent.` / `customer.`). It builds from this repo's source at
+  build time and overlays authentication (JWT + bcrypt), role-based
+  authorization, and a per-view login gate. See its README for the approach,
+  design decisions, trade-offs, and role→capability matrix.
+
+The production overlay is what turns the open POC into a role-separated,
+authenticated deployment while keeping the POC intact for reference.

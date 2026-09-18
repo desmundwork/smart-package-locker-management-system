@@ -1,20 +1,31 @@
+# Secrets — never commit
+**/.env
+!**/.env.example
+caddy/caddy.env
+
 # Python
 __pycache__/
 *.pyc
 .venv/
 venv/
 *.db
-.env
 .pytest_cache/
 
 # FastAPI-served SPA build (copied in at build time)
 backend/static/
 
-# Node / Vite
+# Node / Vite / build artifacts
 node_modules/
 dist/
+build/
 *.local
 *.tsbuildinfo
 
-# OS
+# Local scratch
+build-test/
+poc-source/
+poc-check/
+
+# OS / editor
 .DS_Store
+Thumbs.db

@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"name": "caddy (domain / SSL)",
+			"path": "caddy"
+		},
+		{
+			"name": "smart-locker (POC)",
+			"path": "apps/smart-locker"
+		},
+		{
+			"name": "smart-locker (production)",
+			"path": "apps/smart-locker-prod"
+		},
+		{
+			"name": "yeng.click (root)",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.eol": "\n",
+		"[shellscript]": {
+			"files.eol": "\n"
+		}
+	}
+}

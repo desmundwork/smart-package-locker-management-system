@@ -1,0 +1,48 @@
+# =============================================================================
+# Smart Package Locker — PRODUCTION
+# Served at:
+#   smart-locker.yeng.click            -> landing / login
+#   admin.smart-locker.yeng.click      -> Admin view    (ADMIN role)
+#   agent.smart-locker.yeng.click      -> Agent view    (AGENT role)
+#   customer.smart-locker.yeng.click   -> Customer view (CUSTOMER role)
+#
+# All four subdomains reverse-proxy (via Caddy) to this one container on
+# 127.0.0.1:8100. The frontend selects its view from the request hostname, and
+# the API enforces role-based authorization regardless of which view loaded.
+#
+# The image is built from the POC source + the production overlay (see
+# Dockerfile). Secrets/config come from the .env file (copy .env.example).
+# =============================================================================
+services:
+  smart-locker-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: smart-locker-prod:latest
+    container_name: smart-locker-prod
+    restart: unless-stopped
+
+    # Loopback only; reachable exclusively through Caddy.
+    ports:
+      - "127.0.0.1:8100:8000"
+
+    env_file:
+      - .env
+
+    environment:
+      DATABASE_URL: "sqlite:////data/locker.db"
+      PORT: "8000"
+
+    volumes:
+      - locker-prod-data:/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health').status==200 else 1)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  locker-prod-data:
+    driver: local

@@ -1,0 +1,7 @@
+# Production-only Python deps (appended to the POC's requirements.txt).
+PyJWT==2.9.0
+passlib[bcrypt]==1.7.4
+# Pin bcrypt to 4.0.x: passlib 1.7.4 reads the version via bcrypt.__about__,
+# which was removed in bcrypt >= 4.1, producing a noisy (harmless) log warning.
+bcrypt==4.0.1
+python-multipart==0.0.20
