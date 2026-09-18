@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import "./styles.css";
-import Landing from "./views/Landing";
+import LandingProd from "./LandingProd";
 import Admin from "./views/Admin";
 import Agent from "./views/Agent";
 import Customer from "./views/Customer";
@@ -27,9 +27,10 @@ function App() {
   const [, force] = useState(0);
   const rerender = () => force((n) => n + 1);
 
-  // Landing is public.
+  // Landing is public: a production entry/directory pointing to the per-role
+  // subdomains (NOT the POC's all-views-in-one dashboard).
   if (view === "landing") {
-    return <Landing />;
+    return <LandingProd />;
   }
 
   const needsRole = requiredRoleFor(view);

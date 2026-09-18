@@ -32,6 +32,7 @@ COPY --from=source /src/repo/frontend/ ./
 # Overlay production frontend files.
 COPY frontend/src/auth.ts ./src/auth.ts
 COPY frontend/src/Login.tsx ./src/Login.tsx
+COPY frontend/src/LandingProd.tsx ./src/LandingProd.tsx
 COPY frontend/src/api_prod.ts ./src/api.ts
 COPY frontend/src/main_prod.tsx ./src/main.tsx
 
